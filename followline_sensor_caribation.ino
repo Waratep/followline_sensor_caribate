@@ -124,7 +124,7 @@ int getLeft(){
   return left;
 }
 
-void getRight(){
+int getRight(){
   int right,_min,_max = 0;
   for(int i = sensor / 2 ; i < sensor ; i++){
     right += map(average_sensor(i),_min[i],_max[i],_min,_max) * (i+1);
