@@ -46,6 +46,7 @@ void loop() {
 
 //  print_sensor();
     Serial.println(getLeft() - getRight());
+//    print_real_sensor();
 //  Serial.println(digitalRead(3));
     
   //  Serial.println();
@@ -62,6 +63,14 @@ void loop() {
 
 void Init() {
   int average_sensor = 0;
+ 
+  for(int j = 0 ; j < sensor ; j++){
+    _max[j] = 0;
+    _mid[j] = 0;
+    _min[j] = 1024;
+
+  }
+  
   while (buff_button == 1) {
     Serial.println(buff_button);
     for (int i = 0 ; i < sensor ; i++) {
@@ -104,30 +113,33 @@ void print_sensor() {
 
 void print_real_sensor() {
   for (int i = 0; i < sensor ; i++) {
-    Serial.print(average_sensor(i));
+    Serial.print(map(average_sensor(i),_min[i],_max[i],0,10));
     Serial.print("  ");
   }
+  Serial.print("  |    ");
+  for (int j = 0; j < sensor ; j++) {
+    Serial.print(_mid[j]);
+    Serial.print("  ");
+  }
+  
   Serial.println();
 }
 
-void map_sensor(){
-  for(int i = 0 ; i < sensor ; i++){
-    
-  }
-}
 
 int getLeft(){
-  int left,_min,_max = 0;
+  int left = 0;
   for(int i = 0 ; i < sensor / 2 ; i++){
-    left += map(average_sensor(i),_min[i],_max[i],_min,_max) * (i+1);
+    left += map(average_sensor(i),_min[i],_max[i],0,10) * (i+1);
+    if(i = 0) left = left - 2;
   }
   return left;
 }
 
 int getRight(){
-  int right,_min,_max = 0;
+  int right = 0;
   for(int i = sensor / 2 ; i < sensor ; i++){
-    right += map(average_sensor(i),_min[i],_max[i],_min,_max) * (i+1);
+    right += map(average_sensor(i),_min[i],_max[i],0,10) * (i+1);
+    if(i = 5) right = right - 1;
   }
   return right;  
 }
