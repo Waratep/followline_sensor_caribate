@@ -3,6 +3,7 @@
 int _min[] = {1024, 1024, 1024, 1024, 1024, 1024};
 int _max[] = {0, 0, 0, 0, 0, 0};
 int _mid[] = {0, 0, 0, 0, 0, 0};
+int _sensor[] = {0, 0, 0, 0, 0, 0};
 int buff_button = 0;
 void setup() {
   cli();
@@ -19,6 +20,8 @@ void setup() {
   for (int i = 3; i < 9; i++) {
     pinMode(i, OUTPUT);
   }
+  pinMode(LED_BUILTIN, OUTPUT);
+
 }
 
 
@@ -28,6 +31,7 @@ ISR(TIMER0_COMPA_vect) {
     while (digitalRead(3));
     buff_button = buff_button == 3 ? 0 : buff_button;
     buff_button++;
+
   }
 }
 
@@ -35,9 +39,20 @@ ISR(TIMER0_COMPA_vect) {
 void loop() {
   Init();
   //  print_sensor();
+  //    Serial.println(getError());
+  //  getLeft();
+  //  getRight();
+  for (int i = 0; i < sensor ; i++) {
+    Serial.print(_sensor[i]);
+    Serial.print("  ");
+  }
+  Serial.print(" | ");
   Serial.println(getError());
+  //  Serial.print("   ||   ");
+  //  Serial.println(getError());
   //  Serial.println(digitalRead(3));
-
+  //  print_real_sensor();
+  //  Serial.println();
   //  Serial.println();
   //  digitalWrite(4,1);
   //  digitalWrite(5,0);
@@ -49,6 +64,7 @@ void loop() {
   //  analogWrite(9,124);
 }
 void Init() {
+
   int average_sensor = 0;
   while (buff_button == 1) {
     Serial.println(buff_button);
@@ -89,34 +105,58 @@ void print_sensor() {
 }
 void print_real_sensor() {
   for (int i = 0; i < sensor ; i++) {
-    Serial.print(average_sensor(i));
+    Serial.print(_mid[i]);
     Serial.print("  ");
   }
   Serial.println();
 }
-void map_sensor() {
-  for (int i = 0 ; i < sensor ; i++) {
 
-  }
-}
 int getLeft() {
   int left, _min, _max = 0;
   for (int i = 0 ; i < sensor / 2 ; i++) {
-    left += average_sensor(i) / 100 * (i + 6);
+    if (analogRead(i) < _mid[i]) {
+      _sensor[i] = i - 6;
+    } else {
+      _sensor[i] = 0;
+    }
+  }
+  int buff = _sensor[0] + _sensor[1] + _sensor[2];
+  switch (buff) {
+    case -6 : left = -6; break;
+    case -15 : left = -5; break;
+    case -11 : left = -4; break;
+    case -5 : left = -3; break;
+    case -9 : left = -2; break;
+    case -4 : left = -1; break;
+    default : left = 0; break;
   }
   return left;
 }
 int getRight() {
   int right, _min, _max = 0;
   for (int i = sensor / 2 ; i < sensor ; i++) {
-    right += average_sensor(i) / 100 * (i + 6);
-
+    if (analogRead(i) < _mid[i]) {
+      _sensor[i] = i + 1;
+    } else {
+      _sensor[i] = 0;
+    }
   }
+  int buff = _sensor[3] + _sensor[4] + _sensor[5];
+  switch (buff) {
+    case 6 : right = 6; break;
+    case 15 : right = 5; break;
+    case 11 : right = 4; break;
+    case 5 : right = 3; break;
+    case 9 : right = 2; break;
+    case 4 : right = 1; break;
+    default : right = 0; break;
+  }
+
   return right;
 }
-int getError(){
+int getError() {
   int error = 0;
-  error = getLeft() - getRight() + 39;
+  error = getLeft() + getRight();
   return error;
 }
 
