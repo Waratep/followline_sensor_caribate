@@ -1,10 +1,14 @@
 #define sensor 6
 #define button 3
+#define base_motor 100
 int _min[] = {1024, 1024, 1024, 1024, 1024, 1024};
 int _max[] = {0, 0, 0, 0, 0, 0};
 int _mid[] = {0, 0, 0, 0, 0, 0};
 int _sensor[] = {0, 0, 0, 0, 0, 0};
 int buff_button = 0;
+int last_error = 0 , sum_error = 0 , error;
+int kp = 8 , ki = 0.0001 , kd = 10 , pid = 0;
+
 void setup() {
   cli();
   TCCR0A = 0;
@@ -20,8 +24,6 @@ void setup() {
   for (int i = 3; i < 9; i++) {
     pinMode(i, OUTPUT);
   }
-  pinMode(LED_BUILTIN, OUTPUT);
-
 }
 
 
@@ -37,31 +39,27 @@ ISR(TIMER0_COMPA_vect) {
 
 
 void loop() {
+  
   Init();
-  //  print_sensor();
-  //    Serial.println(getError());
-  //  getLeft();
-  //  getRight();
-  for (int i = 0; i < sensor ; i++) {
-    Serial.print(_sensor[i]);
-    Serial.print("  ");
-  }
-  Serial.print(" | ");
-  Serial.println(getError());
-  //  Serial.print("   ||   ");
+
+  //  for (int i = 0; i < sensor ; i++) {
+  //    Serial.print(_sensor[i]);
+  //    Serial.print("  ");
+  //  }
+  //  Serial.print(" | ");
   //  Serial.println(getError());
-  //  Serial.println(digitalRead(3));
-  //  print_real_sensor();
-  //  Serial.println();
-  //  Serial.println();
-  //  digitalWrite(4,1);
-  //  digitalWrite(5,0);
-  //  digitalWrite(7,1);
-  //  digitalWrite(8,0);
-  //  digitalWrite(6,1);
-  //
-  //  analogWrite(3,124);
-  //  analogWrite(9,124);
+
+  last_error = error;
+  error = getError();
+  sum_error += error;
+
+  pid = error * kp + sum_error * ki + (error - last_error) * kd;
+
+  pid = pid > 255 ? 255 : pid;
+  pid = pid < 0 ? 0 : pid;
+
+  forward(pid,pid*(-1));
+
 }
 void Init() {
 
@@ -158,5 +156,17 @@ int getError() {
   int error = 0;
   error = getLeft() + getRight();
   return error;
+}
+
+void forward(int x , int y) {
+
+  digitalWrite(4, 1);
+  digitalWrite(5, 0);
+  digitalWrite(7, 1);
+  digitalWrite(8, 0);
+  digitalWrite(6, 1);
+
+  analogWrite(3, base_motor + x);
+  analogWrite(9, base_motor + y);
 }
 
