@@ -7,8 +7,7 @@ int _mid[] = {0, 0, 0, 0, 0, 0};
 int _sensor[] = {0, 0, 0, 0, 0, 0};
 int buff_button = 0;
 int last_error = 0 , sum_error = 0 , error;
-int left_motor , right_motor = 0;
-int kp = 16 , ki = 0 , kd = 0 , pid = 0;
+int kp = 8 , ki = 0.0001 , kd = 10 , pid = 0;
 
 void setup() {
   cli();
@@ -22,20 +21,16 @@ void setup() {
   sei();
 
   Serial.begin(9600);
-  for (int i = 5; i < 11; i++) {
+  for (int i = 3; i < 9; i++) {
     pinMode(i, OUTPUT);
   }
-  Init();
-
-
 }
 
 
 ISR(TIMER0_COMPA_vect) {
   if (digitalRead(button)) {
     delay(50);
-    //    Serial.println(digitalRead(button));
-    while (digitalRead(button));
+    while (digitalRead(3));
     buff_button = buff_button == 3 ? 0 : buff_button;
     buff_button++;
 
@@ -44,45 +39,33 @@ ISR(TIMER0_COMPA_vect) {
 
 
 void loop() {
+  
+  Init();
 
-
-  for (int i = 0; i < sensor ; i++) {
-    Serial.print(_sensor[i]);
-    Serial.print("  ");
-  }
-  Serial.print(" | ");
-  Serial.println(getError());
+  //  for (int i = 0; i < sensor ; i++) {
+  //    Serial.print(_sensor[i]);
+  //    Serial.print("  ");
+  //  }
+  //  Serial.print(" | ");
+  //  Serial.println(getError());
 
   last_error = error;
   error = getError();
   sum_error += error;
-  //
-  error = error == 6 ? 30 : error;
-  error = error == -6 ? -30 : error;
 
   pid = error * kp + sum_error * ki + (error - last_error) * kd;
-  //
+
   pid = pid > 255 ? 255 : pid;
-  pid = pid < -255 ? -255 : pid;
-  //
+  pid = pid < 0 ? 0 : pid;
 
-  left_motor = base_motor + pid;
-  right_motor = base_motor + pid * (-1);
-
-  Serial.print(left_motor);
-  Serial.print("  ");
-  Serial.println(right_motor);
-
-  forward(right_motor, left_motor);
+  forward(pid,pid*(-1));
 
 }
 void Init() {
 
   int average_sensor = 0;
-  while (buff_button == 0) {
-    //    Serial.println(".");
-    //  for (int i = 0 ; i < 5000 ; i++) {
-    //    Serial.println(buff_button);
+  while (buff_button == 1) {
+    Serial.println(buff_button);
     for (int i = 0 ; i < sensor ; i++) {
       average_sensor = analogRead(i);
       if (average_sensor < _min[i]) _min[i] = average_sensor;
@@ -91,8 +74,7 @@ void Init() {
     for (int i = 0; i < sensor ; i++) {
       _mid[i] = _min[i] + (_max[i] - _min[i]) / 2;
     }
-    //    print_sensor();
-    //  }
+    print_sensor();
   }
 }
 int average_sensor(int i) {
@@ -176,21 +158,15 @@ int getError() {
   return error;
 }
 
-void forward(int left_motor , int right_motor) {
+void forward(int x , int y) {
 
-  digitalWrite(8, 0);
+  digitalWrite(4, 1);
+  digitalWrite(5, 0);
   digitalWrite(7, 1);
+  digitalWrite(8, 0);
+  digitalWrite(6, 1);
 
-  digitalWrite(6, 0);
-  digitalWrite(5, 1);
-
-  left_motor = left_motor > 255 ? 255 : left_motor;
-  left_motor = left_motor < 0 ? 0 : left_motor;
-
-  right_motor = right_motor > 255 ? 255 : right_motor;
-  right_motor = right_motor < 0 ? 0 : right_motor;
-  
-  analogWrite(10, right_motor);
-  analogWrite(9, left_motor);
+  analogWrite(3, base_motor + x);
+  analogWrite(9, base_motor + y);
 }
 
